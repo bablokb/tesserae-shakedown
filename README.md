@@ -3,6 +3,9 @@
 Automated shakedown harness for the [Tesserae CircuitPython client](https://github.com/bablokb/tesserae-device-circuitpython)
 running in desktop emulation (macOS/Linux).
 
+Built while testing the macOS install path — findings and results in
+[dmellok/tesserae discussion #24](https://github.com/dmellok/tesserae/discussions/24).
+
 ## What it covers
 
 **Tier 1 — deterministic API & unit tests** (`tests/`, pytest, no display, no
