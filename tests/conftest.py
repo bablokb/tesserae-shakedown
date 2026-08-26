@@ -59,7 +59,39 @@ def api(server, session, monkeypatch):
   """ a Tesserae_API instance pointed at the fake server, with short
   timeouts so fault tests run fast """
   monkeypatch.setattr(tesserae_api.Tesserae_API, "TIMEOUT", 1)
-  monkeypatch.setattr(tesserae_api.Tesserae_API, "RETRY_DELAY", 0.05)
-  ident = tesserae_api.Tesserae_ID(
-    "Shakedown", "shakedown_dev", 400, 300, "rgb24", "02:00:00:00:00:01")
+  # clients without the retry feature have no RETRY_DELAY; setting it is
+  # harmless there and the resilience tests will document the gap
+  monkeypatch.setattr(tesserae_api.Tesserae_API, "RETRY_DELAY", 0.05,
+                      raising=False)
+  # newer clients added rotation/format to the identity — adapt by signature
+  import inspect
+  id_params = inspect.signature(tesserae_api.Tesserae_ID.__init__).parameters
+  kwargs = dict(name="Shakedown", device_id="shakedown_dev",
+                width=400, height=300, gamut="rgb24",
+                mac="02:00:00:00:00:01")
+  if "rotation" in id_params:
+    kwargs["rotation"] = 0
+  if "format" in id_params:
+    kwargs["format"] = "bmp"
+  ident = tesserae_api.Tesserae_ID(**kwargs)
   return tesserae_api.Tesserae_API(ident.id, server.url, session, debug=False)
+
+
+# --- cross-generation compatibility helpers ---------------------------------
+# older clients return (code, resp); newer ones return (code, headers, resp)
+
+def unpack(result):
+  if isinstance(result, tuple) and len(result) == 3:
+    return result[0], result[2]
+  return result
+
+
+def fetch_content(api):
+  """ normalize url_content across client generations: return bytes.
+  old: returns a filled buffer; new: streams into a provided io object """
+  import inspect
+  import io
+  if "io_obj" in inspect.signature(api.url_content).parameters:
+    out = api.url_content(io.BytesIO())
+    return out.getvalue()
+  return bytes(api.url_content())

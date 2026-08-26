@@ -96,6 +96,23 @@ def main():
 
   UIApplication.shutdown = shakedown_shutdown
 
+  # newer clients loop run() until a token exists ("stay online and loop
+  # until we have a valid token"), waiting out retry_after_s in the idle
+  # loop. An unapproved device would poll until the admin acts — classify
+  # that as PENDING and stop instead of blocking the shakedown. The idle
+  # loop polls process_events(), which subclasses inherit, so hook there.
+  orig_process_events = UIApplication.process_events
+
+  def shakedown_process_events(self):
+    if not self.data.get("token"):
+      outcome.update(outcome="PENDING",
+                     detail="device unknown to server - awaiting admin approval")
+      write_outcome()
+      sys.exit(0)
+    return orig_process_events(self)
+
+  UIApplication.process_events = shakedown_process_events
+
   try:
     runpy.run_path(os.path.join(client_src, "main.py"), run_name="__main__")
   except SystemExit:

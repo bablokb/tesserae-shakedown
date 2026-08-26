@@ -14,12 +14,14 @@
 
 import pytest
 
+from conftest import unpack, fetch_content
+
 
 def test_dropped_keepalive_recovers_internally(api, server):
   """ one silently-closed connection is absorbed by adafruit_requests """
   api.token = server.token
   server.push_fault("status", "drop")
-  code, resp = api.status({"battery_mv": 4000})
+  code, resp = unpack(api.status({"battery_mv": 4000}))
   assert code == 200
   assert resp["next_poll_s"] == 30
 
@@ -30,7 +32,7 @@ def test_drop_storm_recovers_via_outer_retry(api, server):
   api.token = server.token
   for _ in range(3):
     server.push_fault("status", "drop")
-  code, _ = api.status({"battery_mv": 4000})
+  code, _ = unpack(api.status({"battery_mv": 4000}))
   assert code == 200
 
 
@@ -39,7 +41,7 @@ def test_slow_server_recovers(api, server):
   api.token = server.token
   server.push_fault("status", "stall", 1.5)   # > TIMEOUT of 1s
   server.push_fault("status", "stall", 1.5)
-  code, _ = api.status({"battery_mv": 4000})
+  code, _ = unpack(api.status({"battery_mv": 4000}))
   assert code == 200
 
 
@@ -57,7 +59,7 @@ def test_http_error_is_not_retried(api, server):
   it must be returned immediately, without burning retries """
   api.token = "stale-token"
   server.push_fault("status", "respond", 401, {"error": "invalid token"})
-  code, resp = api.status({"battery_mv": 4000})
+  code, resp = unpack(api.status({"battery_mv": 4000}))
   assert code == 401
   assert server.count("/status") == 1
 
@@ -68,4 +70,4 @@ def test_truncated_content_detected(api, server):
   api.frame()
   server.content_length_override = len(server.content) + 64
   with pytest.raises((RuntimeError, OSError)):
-    api.url_content()
+    fetch_content(api)
