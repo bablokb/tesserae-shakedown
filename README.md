@@ -58,6 +58,7 @@ PNG per display type that painted.
 | variable | default | meaning |
 |---|---|---|
 | `TESSERAE_CLIENT_DIR` | `../tesserae-device-circuitpython` | client checkout to test |
+| `TESSERAE_CLIENT_VENV` | `$TESSERAE_CLIENT_DIR/venv.tesserae.cp-client` | venv of the client |
 | `SHAKEDOWN_DISPLAYS` | `native` | comma list or `all` |
 | `SHAKEDOWN_SKIP_SMOKE` | unset | tier 1 only |
 | `SHAKEDOWN_CYCLE_TIMEOUT` | `90` | seconds before a smoke cycle is killed |

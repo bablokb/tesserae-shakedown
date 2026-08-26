@@ -19,7 +19,7 @@ set -uo pipefail
 
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CLIENT_DIR="${TESSERAE_CLIENT_DIR:-$here/../tesserae-device-circuitpython}"
-CLIENT_VENV="$CLIENT_DIR/venv.tesserae.cp-client"
+CLIENT_VENV="${TESSERAE_CLIENT_VENV:-$CLIENT_DIR/venv.tesserae.cp-client}"
 STAMP="$(date +%Y%m%d-%H%M%S)"
 REPORT="$here/report/$STAMP"
 mkdir -p "$REPORT"
