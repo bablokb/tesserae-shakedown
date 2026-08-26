@@ -1,0 +1,4 @@
+pytest
+Adafruit-Blinka
+adafruit-circuitpython-requests
+setuptools<81
