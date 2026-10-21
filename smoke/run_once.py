@@ -58,7 +58,7 @@ def main():
   from base_app.ui_application import UIApplication
 
   def shakedown_shutdown(self, with_wakeup=True):
-    painted = bool(self.data.get("dashboard"))
+    painted = bool(self.data.get("updated"))   # dashboard tuple is pre-allocated, always truthy
     registered = bool(self.data.get("token"))
     if not with_wakeup:
       outcome.update(outcome="FAIL",
@@ -92,7 +92,9 @@ def main():
     except Exception as ex:
       outcome["png_error"] = repr(ex)
     write_outcome()
-    return None   # instead of blocking on the pygame window
+    # main.py loops run() forever and relies on shutdown not returning;
+    # exit here instead of blocking on the pygame window
+    sys.exit(0)
 
   UIApplication.shutdown = shakedown_shutdown
 
@@ -112,6 +114,10 @@ def main():
     return orig_process_events(self)
 
   UIApplication.process_events = shakedown_process_events
+
+  # the PC hal reads an emulated wake-button from sys.argv[1], so hand
+  # main.py a clean argv instead of ours (output dir, client dir)
+  sys.argv = [os.path.join(client_src, "main.py")]
 
   try:
     runpy.run_path(os.path.join(client_src, "main.py"), run_name="__main__")
